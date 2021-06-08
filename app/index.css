@@ -1,0 +1,56 @@
+
+  body {
+    background-color: beige;
+  } 
+
+  nav{
+      position: fixed;
+      
+    }
+    .nav {
+        margin: 0;
+        padding: 0;
+          list-style: none; 
+    }
+      
+    
+      
+        #navbar a{
+      color: #4d4e53;
+        text-decoration:none;
+        cursor:pointer;
+        }
+        #navbar li{
+      color: #4d4e53;
+          background-color: whitesmoke;
+      border:3px solid;
+      border-bottom-width:3px;
+      padding:2px;
+      padding-left:20px;
+      list-style: none;
+      position:relative;
+     left:-50px;
+      width:100%;
+      
+    }
+    
+  
+  
+  
+#welcome-section
+{
+font-size: 22px;
+text-align: center;
+color: rgb(53, 53, 58);
+padding-top: 0px;
+margin-top: 0px;
+
+  }
+
+  img {
+      height: 400px;
+      width: 600px;
+      padding: 5%;
+  }
+  
+ 
