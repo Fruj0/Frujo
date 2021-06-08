@@ -3,7 +3,7 @@ name: CI to DockerHub
 # Triggers the workflow on push or pull request events but only for the main branch
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 #  pull_request:
 #    branches: [ main ]
 
