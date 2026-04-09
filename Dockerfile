@@ -1,30 +1,33 @@
-services:
-  bitsalt-web:
-    image: bitsalt/frujo:${IMAGE_TAG:-latest}
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.services.bitsalt-web.loadbalancer.server.port=3000"
-      # Apex domain
-      - "traefik.http.routers.bitsalt.rule=Host(`${SITE_DOMAIN}`)"
-      - "traefik.http.routers.bitsalt.entrypoints=websecure"
-      - "traefik.http.routers.bitsalt.tls.certresolver=le"
-      - "traefik.http.routers.bitsalt.service=bitsalt-web"
-      # www redirect
-      - "traefik.http.routers.bitsalt-www.rule=Host(`www.${SITE_DOMAIN}`)"
-      - "traefik.http.routers.bitsalt-www.entrypoints=websecure"
-      - "traefik.http.routers.bitsalt-www.tls.certresolver=le"
-      - "traefik.http.routers.bitsalt-www.middlewares=bitsalt-www-redirect"
-      - "traefik.http.routers.bitsalt-www.service=bitsalt-web"
-      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.regex=^https://www\\.(.+)"
-      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.replacement=https://$$1"
-      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.permanent=true"
-    networks:
-      - proxy
-      - internal
+# Build stage
+FROM node:22-alpine AS builder
 
-networks:
-  proxy:
-    external: true
-  internal:
-    internal: true
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Runtime stage
+FROM node:22-alpine AS runner
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+COPY --from=builder /app/package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist ./dist
+
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+EXPOSE 3000
+
+CMD ["node", "./dist/server/entry.mjs"]
