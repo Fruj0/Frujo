@@ -1,4 +1,33 @@
-version: '2'
 services:
-  app:
-    image: frujo:latest
+  bitsalt-web:
+    image: bitsalt/frujo:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - CONVERTKIT_API_KEY=${CONVERTKIT_API_KEY}
+      - CONVERTKIT_FORM_ID=${CONVERTKIT_FORM_ID}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.bitsalt-web.loadbalancer.server.port=3000"
+      # Apex domain
+      - "traefik.http.routers.bitsalt.rule=Host(`${SITE_DOMAIN}`)"
+      - "traefik.http.routers.bitsalt.entrypoints=websecure"
+      - "traefik.http.routers.bitsalt.tls.certresolver=le"
+      - "traefik.http.routers.bitsalt.service=bitsalt-web"
+      # www redirect
+      - "traefik.http.routers.bitsalt-www.rule=Host(`www.${SITE_DOMAIN}`)"
+      - "traefik.http.routers.bitsalt-www.entrypoints=websecure"
+      - "traefik.http.routers.bitsalt-www.tls.certresolver=le"
+      - "traefik.http.routers.bitsalt-www.middlewares=bitsalt-www-redirect"
+      - "traefik.http.routers.bitsalt-www.service=bitsalt-web"
+      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.replacement=https://$$1"
+      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.permanent=true"
+    networks:
+      - proxy
+      - internal
+
+networks:
+  proxy:
+    external: true
+  internal:
+    internal: true
