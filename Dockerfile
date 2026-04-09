@@ -1,8 +1,30 @@
-FROM nginx:1.9
+services:
+  bitsalt-web:
+    image: bitsalt/frujo:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.bitsalt-web.loadbalancer.server.port=3000"
+      # Apex domain
+      - "traefik.http.routers.bitsalt.rule=Host(`${SITE_DOMAIN}`)"
+      - "traefik.http.routers.bitsalt.entrypoints=websecure"
+      - "traefik.http.routers.bitsalt.tls.certresolver=le"
+      - "traefik.http.routers.bitsalt.service=bitsalt-web"
+      # www redirect
+      - "traefik.http.routers.bitsalt-www.rule=Host(`www.${SITE_DOMAIN}`)"
+      - "traefik.http.routers.bitsalt-www.entrypoints=websecure"
+      - "traefik.http.routers.bitsalt-www.tls.certresolver=le"
+      - "traefik.http.routers.bitsalt-www.middlewares=bitsalt-www-redirect"
+      - "traefik.http.routers.bitsalt-www.service=bitsalt-web"
+      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.replacement=https://$$1"
+      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.permanent=true"
+    networks:
+      - proxy
+      - internal
 
-COPY ./app /usr/share/nginx/html/
-
-EXPOSE 80/tcp
-
-VOLUME /var/www/frujo/app
-
+networks:
+  proxy:
+    external: true
+  internal:
+    internal: true
