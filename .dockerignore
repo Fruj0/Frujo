@@ -1,0 +1,41 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+# Never needed; rebuilt inside Docker.
+node_modules/
+
+# ── Version control ───────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── CI/CD ─────────────────────────────────────────────────────────────────────
+# Workflow definitions are not part of the application.
+.github/
+
+# ── Local environment files ───────────────────────────────────────────────────
+# Never bake secrets into an image.
+.env
+.env.*
+.env.local
+.env.*.local
+
+# ── Astro build cache ─────────────────────────────────────────────────────────
+.astro/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ── OS artifacts ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Editor config ─────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+
+# ── Project docs and packaging ────────────────────────────────────────────────
+project-notes/
+site-package/
+
+# NOTE: dist/ is intentionally NOT excluded.
+# Dockerfile.content requires dist/ in the build context (it copies the
+# pre-built site output rather than running npm run build inside Docker).

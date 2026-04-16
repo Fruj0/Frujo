@@ -1,27 +1,36 @@
+# ── Configuration ─────────────────────────────────────────────────────────────
+# Set these in a .env file on each server (never commit .env to version control):
+#
+#   IMAGE_TAG=latest          # "staging" on your staging server
+#   SITE_DOMAIN=example.com   # apex domain Traefik routes traffic to
+#   SERVICE_NAME=myapp        # unique name for this deployment instance
+#
+# See CONFIG.md for full setup instructions.
+#
+# ──────────────────────────────────────────────────────────────────────────────
+
 services:
-  bitsalt-web:
-    image: bitsalt/frujo:${IMAGE_TAG:-latest}
+  app:
+    image: YOUR_DOCKERHUB_USERNAME/YOUR_IMAGE_NAME:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    environment:
-      - CONVERTKIT_API_KEY=${CONVERTKIT_API_KEY}
-      - CONVERTKIT_FORM_ID=${CONVERTKIT_FORM_ID}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.services.bitsalt-web.loadbalancer.server.port=3000"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.services.${SERVICE_NAME:-app}.loadbalancer.server.port=3000"
       # Apex domain
-      - "traefik.http.routers.bitsalt.rule=Host(`${SITE_DOMAIN}`)"
-      - "traefik.http.routers.bitsalt.entrypoints=websecure"
-      - "traefik.http.routers.bitsalt.tls.certresolver=le"
-      - "traefik.http.routers.bitsalt.service=bitsalt-web"
+      - "traefik.http.routers.${SERVICE_NAME:-app}.rule=Host(`${SITE_DOMAIN}`)"
+      - "traefik.http.routers.${SERVICE_NAME:-app}.entrypoints=websecure"
+      - "traefik.http.routers.${SERVICE_NAME:-app}.tls.certresolver=le"
+      - "traefik.http.routers.${SERVICE_NAME:-app}.service=${SERVICE_NAME:-app}"
       # www redirect
-      - "traefik.http.routers.bitsalt-www.rule=Host(`www.${SITE_DOMAIN}`)"
-      - "traefik.http.routers.bitsalt-www.entrypoints=websecure"
-      - "traefik.http.routers.bitsalt-www.tls.certresolver=le"
-      - "traefik.http.routers.bitsalt-www.middlewares=bitsalt-www-redirect"
-      - "traefik.http.routers.bitsalt-www.service=bitsalt-web"
-      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.regex=^https://www\\.(.+)"
-      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.replacement=https://$$1"
-      - "traefik.http.middlewares.bitsalt-www-redirect.redirectregex.permanent=true"
+      - "traefik.http.routers.${SERVICE_NAME:-app}-www.rule=Host(`www.${SITE_DOMAIN}`)"
+      - "traefik.http.routers.${SERVICE_NAME:-app}-www.entrypoints=websecure"
+      - "traefik.http.routers.${SERVICE_NAME:-app}-www.tls.certresolver=le"
+      - "traefik.http.routers.${SERVICE_NAME:-app}-www.middlewares=${SERVICE_NAME:-app}-www-redirect"
+      - "traefik.http.routers.${SERVICE_NAME:-app}-www.service=${SERVICE_NAME:-app}"
+      - "traefik.http.middlewares.${SERVICE_NAME:-app}-www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.${SERVICE_NAME:-app}-www-redirect.redirectregex.replacement=https://$$1"
+      - "traefik.http.middlewares.${SERVICE_NAME:-app}-www-redirect.redirectregex.permanent=true"
     networks:
       - proxy
       - internal

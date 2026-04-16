@@ -1,33 +1,35 @@
-# Build stage
-FROM node:22-alpine AS builder
+# Build stage: React frontend
+FROM node:22-alpine AS frontend-builder
 
-WORKDIR /app
+WORKDIR /app/frontend
 
-COPY package*.json ./
+COPY frontend/package*.json ./
 RUN npm ci
 
-COPY . .
+COPY frontend/ .
 RUN npm run build
 
 # Runtime stage
 FROM node:22-alpine AS runner
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN apk add --no-cache nginx
 
 WORKDIR /app
 
-COPY --from=builder /app/package*.json ./
-RUN npm ci --omit=dev
+# Install backend production dependencies
+COPY backend/package*.json ./backend/
+RUN cd backend && npm ci --omit=dev
 
-COPY --from=builder /app/dist ./dist
+# Copy backend source
+COPY backend/ ./backend/
 
-RUN chown -R appuser:appgroup /app
+# Copy built frontend to nginx web root
+COPY --from=frontend-builder /app/frontend/build /usr/share/nginx/html
 
-USER appuser
-
-ENV HOST=0.0.0.0
-ENV PORT=3000
+# Copy nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 3000
 
-CMD ["node", "./dist/server/entry.mjs"]
+# Start Node backend on 3001, then nginx in the foreground on 3000
+CMD ["/bin/sh", "-c", "node backend/src/index.js & exec nginx -g 'daemon off;'"]
